@@ -24,49 +24,105 @@ class TVSpider(scrapy.Spider):
         self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
     def parse(self, response):
-        # Sử dụng Selenium để mở trang và bấm nút "Xem thêm"
         self.driver.get(response.url)
-        time.sleep(3)  # Chờ trang tải
-
-        # Nhấp vào nút "Xem thêm" cho đến khi tất cả sản phẩm được tải
+        time.sleep(3)
+    
+        # Continuously scroll and click "See More" button until all products are loaded
         while True:
             try:
-                # Sử dụng WebDriverWait để đợi nút "Xem thêm" xuất hiện
-                load_more_button = WebDriverWait(self.driver, 10).until(
+                # Chờ nút "Xem thêm" xuất hiện và có thể nhấp
+                load_more_button = WebDriverWait(self.driver, 20).until(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.button.btn-show-more.button__show-more-product'))
                 )
-                
+                # Nhấn nút "Xem thêm"
                 load_more_button.click()
-                time.sleep(3) 
+                time.sleep(5)  # Tăng thời gian chờ để đảm bảo sản phẩm được tải
             except Exception as e:
-                # Khi không còn nút "Xem thêm", thoát khỏi vòng lặp
+                # Kiểm tra nếu nút không còn xuất hiện hoặc không thể nhấn (đã hết sản phẩm)
+                self.log(f"No more products to load: {str(e)}")
                 break
-
-        # Lấy nội dung của trang sau khi tất cả sản phẩm đã tải
+        
+    
+        # After all products are loaded, get the page source
         page_source = self.driver.page_source
         sel = Selector(text=page_source)
-
-        # Loop through each product on the listing page
+    
+        # Process the products
         for product in sel.css('div.product-info'):
             product_url = product.css('a.product__link::attr(href)').get()
             product_id = product_url.split('/')[-1].replace('.html', '')
-
+    
+            # Log to check structure
+            self.log(f"Product Badge HTML: {product.xpath('.//div[@class=\"product__badge"]').get()}")
+    
+            # Extract data using XPath
+            screen_size = product.xpath('.//div[@class="product__badge"]/p[1]/text()').get(default='N/A')
+            ram = product.xpath('.//div[@class="product__badge"]/p[2]/text()').get(default='N/A')
+            rom = product.xpath('.//div[@class="product__badge"]/p[3]/text()').get(default='N/A')
+    
+            # Store in an item dictionary
             item = {
+                'product_name': product.css('h3::text').get(),
+                'price_sale': self.clean_text(product.css('p.product__price--show::text').get(default='N/A')),
+                'price': self.clean_text(product.css('p.product__price--through::text').get(default='N/A')),
+                'percent_discount': self.clean_text(product.css('p.product__price--percent-detail::text').get(default='N/A')),
+                'promotion': self.extract_promotion_text(product),
+                'screen_size': screen_size,
+                'ram': ram,
+                'rom': rom,
+                'rating_count': self.clean_text(product.css('span.product__rating--count::text').get(default='N/A')),
+                'rate_average': self.clean_text(product.css('span.product__rating--average::text').get(default='N/A')),
+                'outstanding_feature': product.css('div.product__feature::text').get(default='N/A')
+            }
+    
+            yield response.follow(product_url, self.parse_product_details, meta={'item': item})
+    
+            self.driver.get(response.url)
+            time.sleep(3)
+    
+            # Cuộn xuống để đảm bảo tất cả dữ liệu được tải
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            time.sleep(5)
+    
+            while True:
+                try:
+                    load_more_button = WebDriverWait(self.driver, 10).until(
+                        EC.element_to_be_clickable((By.CSS_SELECTOR, 'a.button.btn-show-more.button__show-more-product'))
+                    )
+                    load_more_button.click()
+                    time.sleep(3)
+                except Exception as e:
+                    break
+                
+            page_source = self.driver.page_source
+            sel = Selector(text=page_source)
+    
+            for product in sel.css('div.product-info'):
+                product_url = product.css('a.product__link::attr(href)').get()
+                product_id = product_url.split('/')[-1].replace('.html', '')
+    
+                self.log(f"Product HTML: {product.get()}")
+    
+                screen_size = product.xpath('.//div[@class="product__badge"]/p[1]/text()').get(default='N/A')
+                ram = product.xpath('.//div[@class="product__badge"]/p[2]/text()').get(default='N/A')
+                rom = product.xpath('.//div[@class="product__badge"]/p[3]/text()').get(default='N/A')
+    
+                item = {
                     'product_name': product.css('h3::text').get(),
                     'price_sale': self.clean_text(product.css('p.product__price--show::text').get(default='N/A')),
                     'price': self.clean_text(product.css('p.product__price--through::text').get(default='N/A')),
                     'percent_discount': self.clean_text(product.css('p.product__price--percent-detail::text').get(default='N/A')),
                     'promotion': self.extract_promotion_text(product),
-                    'screen_size': product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+\.\d+ inches)')[0] if product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+\.\d+ inches)') else 'N/A',
-                    'ram': product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+ GB)')[0] if len(product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+ GB)')) >= 1 else 'N/A',
-                    'rom': product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+ GB)')[1] if len(product.css('div.product__badge p.product__more-info__item::text').re(r'(\d+ GB)')) >= 2 else 'N/A',
+                    'screen_size': screen_size,
+                    'ram': ram,
+                    'rom': rom,
                     'rating_count': self.clean_text(product.css('span.product__rating--count::text').get(default='N/A')),
                     'rate_average': self.clean_text(product.css('span.product__rating--average::text').get(default='N/A')),
                     'outstanding_feature': product.css('div.product__feature::text').get(default='N/A')
-                    }
+                }
+    
+                yield response.follow(product_url, self.parse_product_details, meta={'item': item})
 
-            # Follow the product URL to get detailed information
-            yield response.follow(product_url, self.parse_product_details, meta={'item': item})
 
     def parse_product_details(self, response):
         item = response.meta['item']
@@ -75,24 +131,15 @@ class TVSpider(scrapy.Spider):
         rating_elements = response.css('div.box-rating .icon.is-active')
         star_count = len(rating_elements)
 
-        # Lấy tổng số lượt đánh giá cho mỗi mức sao
-        rating_counts = response.css('div.rating-breakdown li::text').re(r'(\d+) đánh giá (\d) sao')
-        
-        # Lấy tổng số lượt đánh giá
-        total_reviews = response.css('div.box-rating::text').re_first(r'(\d+) đánh giá')
-        total_reviews = int(total_reviews) if total_reviews else 0
-        
-        # Tính tổng số điểm
-        total_score = sum(int(count) * int(star) for count, star in rating_counts) if rating_counts else 0
-        
-        # Tính trung bình điểm
-        if total_reviews > 0:
-            average_rating = total_score / total_reviews
+        # Get the number of reviews
+        rating_text = response.css('div.box-rating::text').re_first(r'(\d+) đánh giá')
+
+        if rating_text:
+            item['rating_count'] = int(rating_text)
+            item['rate_average'] = f"{star_count}/5"  # Hiển thị trung bình sao
         else:
-            average_rating = 'null'
-        
-        item['rating_count'] = total_reviews
-        item['rate_average'] = f"{average_rating:.1f}/5" if average_rating != 'null' else 'null'
+            item['rating_count'] = 'null'
+            item['rate_average'] = 'null'
 
         # Get outstanding features
         outstanding_feature_elements = response.css('div.ksp-content ul li::text').getall()
@@ -102,6 +149,7 @@ class TVSpider(scrapy.Spider):
         self.log(f"Product Details: {item}")
 
         yield item
+
 
     def extract_promotion_text(self, product):
         parts = product.css('div.promotion p::text').getall()
