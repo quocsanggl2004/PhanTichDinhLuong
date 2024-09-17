@@ -111,12 +111,21 @@ class CellphonesGraphQLSpider(scrapy.Spider):
             # Định dạng camera_primary và camera_secondary
             camera_primary = remove_html_tags(attributes.get('camera_primary', 'N/A'))
             camera_secondary = remove_html_tags(attributes.get('camera_secondary', 'N/A'))
+
+            # Xử lý giá
+            price = filterable_info.get('price', 0)
+            special_price = filterable_info.get('special_price', 0)
+            
+            # Kiểm tra nếu cả price và special_price bằng 0 hoặc là None
+            if (not price or price == 0) and (not special_price or special_price == 0):
+                price = "Giá Liên Hệ"
+                special_price = "Giá Liên Hệ"
         
             yield {
                 'product_id': general_info.get('product_id'),
                 'name': name, 
-                'price': filterable_info.get('price'),
-                'special_price': filterable_info.get('special_price'),
+                'price': price,
+                'special_price': special_price,
                 'battery': clean_text(attributes.get('battery', 'N/A')),
                 'display_size': clean_text(attributes.get('display_size', 'N/A')),
                 'mobile_tan_so_quet': clean_text(attributes.get('mobile_tan_so_quet', 'N/A')),
