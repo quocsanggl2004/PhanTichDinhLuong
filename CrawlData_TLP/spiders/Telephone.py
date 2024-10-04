@@ -77,7 +77,7 @@ class CellphonesGraphQLSpider(scrapy.Spider):
             self.log(f"Yêu cầu không thành công với mã trạng thái: {response.status}")
             return
         
-        data = json.loads(response.text)
+        data = json.loads(response.text) 
         products = data.get('data', {}).get('products', [])
 
         if products is None:
@@ -131,7 +131,11 @@ class CellphonesGraphQLSpider(scrapy.Spider):
                 'battery': clean_text(attributes.get('battery', 'N/A')),
                 'chipset': clean_text(attributes.get('chipset', 'N/A')),
                 'display_size': clean_text(attributes.get('display_size', 'N/A')),
+                'display_resolution': clean_text(attributes.get('display_resolution', 'N/A')),
                 'mobile_type_of_display': clean_text(attributes.get('mobile_type_of_display', 'N/A')),
+                'camera_primary': clean_html(attributes.get('camera_primary', 'N/A')),  # Sử dụng clean_html
+                'camera_secondary': clean_html(attributes.get('camera_secondary', 'N/A')),  # Sử dụng clean_html
+                'camera_video': clean_html(attributes.get('camera_video', 'N/A')),  # Sử dụng clean_html
                 'memory_internal': clean_text(attributes.get('memory_internal', 'N/A')),
                 'storage': clean_text(attributes.get('storage', 'N/A')),
                 'product_weight': clean_text(attributes.get('product_weight', 'N/A')),
@@ -143,6 +147,7 @@ class CellphonesGraphQLSpider(scrapy.Spider):
                 'warranty_information': clean_text(attributes.get('warranty_information', 'N/A')),
                 'total_count': general_info.get('review', {}).get('total_count'),
                 'average_rating': formatted_rating,  
+                'mobile_display_features': clean_html(attributes.get('mobile_display_features', 'N/A')),  # Sử dụng clean_html
                 'key_selling_points': clean_html(attributes.get('key_selling_points', 'N/A')),  # Sử dụng clean_html
                 'promotion_information': clean_html(filterable_info.get('promotion_information', 'N/A')),  # Sử dụng clean_html
                 'change_layout_preorder': clean_text(attributes.get('change_layout_preorder', 'N/A')),
