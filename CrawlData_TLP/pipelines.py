@@ -8,6 +8,8 @@
 from itemadapter import ItemAdapter
 
 
-class CrawldataTlpPipeline:
+class CrawldataTLPPipeline:
     def process_item(self, item, spider):
         return item
+    
+

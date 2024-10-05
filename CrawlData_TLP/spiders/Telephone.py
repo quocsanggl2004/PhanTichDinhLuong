@@ -108,16 +108,10 @@ class CellphonesGraphQLSpider(scrapy.Spider):
         
             # Định dạng average_rating
             average_rating = general_info.get('review', {}).get('average_rating')
-            formatted_rating = f"{average_rating}/5" if average_rating else 'N/A'
 
             # Xử lý giá
             price = filterable_info.get('price', 0)
             special_price = filterable_info.get('special_price', 0)
-            
-            # Kiểm tra nếu cả price và special_price bằng 0 hoặc là None
-            if (not price or price == 0) and (not special_price or special_price == 0):
-                price = "Giá Liên Hệ"
-                special_price = "Giá Liên Hệ"
                 
             yield {
                 'product_id': general_info.get('product_id'),
@@ -140,17 +134,14 @@ class CellphonesGraphQLSpider(scrapy.Spider):
                 'storage': clean_text(attributes.get('storage', 'N/A')),
                 'product_weight': clean_text(attributes.get('product_weight', 'N/A')),
                 'mobile_tan_so_quet': clean_text(attributes.get('mobile_tan_so_quet', 'N/A')),
-                'mobile_jack_tai_nghe': clean_text(attributes.get('mobile_jack_tai_nghe', 'N/A')),
                 'loai_mang': clean_text(attributes.get('loai_mang', 'N/A')),
                 'mobile_cong_sac': clean_text(attributes.get('mobile_cong_sac', 'N/A')),
                 'mobile_cam_bien_van_tay': clean_text(attributes.get('mobile_cam_bien_van_tay', 'N/A')),
                 'warranty_information': clean_text(attributes.get('warranty_information', 'N/A')),
                 'total_count': general_info.get('review', {}).get('total_count'),
-                'average_rating': formatted_rating,  
-                'mobile_display_features': clean_html(attributes.get('mobile_display_features', 'N/A')),  # Sử dụng clean_html
+                'average_rating': average_rating,
                 'key_selling_points': clean_html(attributes.get('key_selling_points', 'N/A')),  # Sử dụng clean_html
                 'promotion_information': clean_html(filterable_info.get('promotion_information', 'N/A')),  # Sử dụng clean_html
-                'change_layout_preorder': clean_text(attributes.get('change_layout_preorder', 'N/A')),
             }
 
         # Chuyển sang trang tiếp theo nếu còn sản phẩm

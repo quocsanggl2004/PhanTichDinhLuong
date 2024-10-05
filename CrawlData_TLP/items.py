@@ -28,18 +28,14 @@ class CrawldataTlpItem(scrapy.Item):
     storage = scrapy.Field()
     product_weight = scrapy.Field()
     mobile_tan_so_quet = scrapy.Field()
-    mobile_jack_tai_nghe = scrapy.Field()
     loai_mang = scrapy.Field()
     mobile_cong_sac = scrapy.Field()
-    mobile_cong_nghe_sac = scrapy.Field()
     mobile_cam_bien_van_tay = scrapy.Field()
     warranty_information = scrapy.Field()
     total_count = scrapy.Field()
     average_rating = scrapy.Field()
-    mobile_display_features = scrapy.Field()
     key_selling_points = scrapy.Field()
     promotion_information = scrapy.Field()
-    change_layout_preorder = scrapy.Field()
 
 
 
