@@ -116,7 +116,6 @@ class CellphonesGraphQLSpider(scrapy.Spider):
             yield {
                 'product_id': general_info.get('product_id'),
                 'name': name, 
-                'mobile_ra_mat': clean_text(attributes.get('mobile_ra_mat', 'N/A')),
                 'price': price,
                 'special_price': special_price,
                 'manufacturer': clean_text(general_info.get('manufacturer', 'N/A')),
@@ -127,8 +126,8 @@ class CellphonesGraphQLSpider(scrapy.Spider):
                 'display_size': clean_text(attributes.get('display_size', 'N/A')),
                 'display_resolution': clean_text(attributes.get('display_resolution', 'N/A')),
                 'mobile_type_of_display': clean_text(attributes.get('mobile_type_of_display', 'N/A')),
-                'camera_primary': clean_html(attributes.get('camera_primary', 'N/A')),  # Sử dụng clean_html
-                'camera_secondary': clean_html(attributes.get('camera_secondary', 'N/A')),  # Sử dụng clean_html
+                'camera_back': clean_html(attributes.get('camera_primary', 'N/A')),  # Sử dụng clean_html
+                'camera_front': clean_html(attributes.get('camera_secondary', 'N/A')),  # Sử dụng clean_html
                 'camera_video': clean_html(attributes.get('camera_video', 'N/A')),  # Sử dụng clean_html
                 'memory_internal': clean_text(attributes.get('memory_internal', 'N/A')),
                 'storage': clean_text(attributes.get('storage', 'N/A')),

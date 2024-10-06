@@ -10,7 +10,6 @@ class CrawldataTlpItem(scrapy.Item):
     # define the fields for your item here like:
     product_id = scrapy.Field()
     name = scrapy.Field()
-    mobile_ra_mat = scrapy.Field()
     price = scrapy.Field()
     special_price = scrapy.Field()
     manufacturer = scrapy.Field()
